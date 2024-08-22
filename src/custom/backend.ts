@@ -44,6 +44,10 @@ const forcePathStyle =
     process.env.RUNS_ON_S3_FORCE_PATH_STYLE === "true" ||
     process.env.AWS_S3_FORCE_PATH_STYLE === "true";
 
+const cacheAcrossCommits =
+  process.env.RUNS_ON_CACHE_ACROSS_COMMITS ==="true" ||
+  process.env.process.env.CACHE_ACROSS_COMMITS === "true"
+
 const uploadQueueSize = Number(process.env.UPLOAD_QUEUE_SIZE || "4");
 const uploadPartSize =
     Number(process.env.UPLOAD_PART_SIZE || "32") * 1024 * 1024;
@@ -92,7 +96,9 @@ function getS3Prefix(
         enableCrossOsArchive
     );
 
-    return ["cache", repository, version].join("/");
+    return cacheAcrossCommits
+        ?[("cache", repository)].join("/")
+        :[("cache", repository, version)].join("/");
 }
 
 export async function getCacheEntry(
