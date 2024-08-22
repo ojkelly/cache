@@ -1,20 +1,22 @@
-import {
-    S3Client,
-    GetObjectCommand,
-    ListObjectsV2Command
-} from "@aws-sdk/client-s3";
-const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
-import { createReadStream } from "fs";
-import * as crypto from "crypto";
+import * as utils from "@actions/cache/lib/internal/cacheUtils";
+import { CompressionMethod } from "@actions/cache/lib/internal/constants";
 import {
     DownloadOptions,
     getDownloadOptions
 } from "@actions/cache/lib/options";
-import { CompressionMethod } from "@actions/cache/lib/internal/constants";
 import * as core from "@actions/core";
-import * as utils from "@actions/cache/lib/internal/cacheUtils";
+import {
+    GetObjectCommand,
+    ListObjectsV2Command,
+    S3Client
+} from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
+import * as crypto from "crypto";
+import { createReadStream } from "fs";
+
 import { downloadCacheHttpClientConcurrent } from "./downloadUtils";
+
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 
 export interface ArtifactCacheEntry {
     cacheKey?: string;
@@ -45,8 +47,8 @@ const forcePathStyle =
     process.env.AWS_S3_FORCE_PATH_STYLE === "true";
 
 const cacheAcrossCommits =
-  process.env.RUNS_ON_CACHE_ACROSS_COMMITS ==="true" ||
-  process.env.process.env.CACHE_ACROSS_COMMITS === "true"
+    process.env.RUNS_ON_CACHE_ACROSS_COMMITS === "true" ||
+    process.env.CACHE_ACROSS_COMMITS === "true";
 
 const uploadQueueSize = Number(process.env.UPLOAD_QUEUE_SIZE || "4");
 const uploadPartSize =
@@ -97,8 +99,8 @@ function getS3Prefix(
     );
 
     return cacheAcrossCommits
-        ?[("cache", repository)].join("/")
-        :[("cache", repository, version)].join("/");
+        ? ["cache", repository].join("/")
+        : ["cache", repository, version].join("/");
 }
 
 export async function getCacheEntry(

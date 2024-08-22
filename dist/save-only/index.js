@@ -93765,14 +93765,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.saveCache = exports.downloadCache = exports.getCacheEntry = exports.getCacheVersion = void 0;
-const client_s3_1 = __nccwpck_require__(9250);
-const { getSignedUrl } = __nccwpck_require__(5052);
-const fs_1 = __nccwpck_require__(7147);
-const crypto = __importStar(__nccwpck_require__(6113));
-const core = __importStar(__nccwpck_require__(2186));
 const utils = __importStar(__nccwpck_require__(1518));
+const core = __importStar(__nccwpck_require__(2186));
+const client_s3_1 = __nccwpck_require__(9250);
 const lib_storage_1 = __nccwpck_require__(3087);
+const crypto = __importStar(__nccwpck_require__(6113));
+const fs_1 = __nccwpck_require__(7147);
 const downloadUtils_1 = __nccwpck_require__(6968);
+const { getSignedUrl } = __nccwpck_require__(5052);
 // if executing from RunsOn, unset any existing AWS env variables so that we can use the IAM instance profile for credentials
 // see unsetCredentials() in https://github.com/aws-actions/configure-aws-credentials/blob/v4.0.2/src/helpers.ts#L44
 if (process.env.RUNS_ON_RUNNER_NAME && process.env.RUNS_ON_RUNNER_NAME !== "") {
@@ -93789,6 +93789,8 @@ const region = process.env.RUNS_ON_AWS_REGION ||
     process.env.AWS_DEFAULT_REGION;
 const forcePathStyle = process.env.RUNS_ON_S3_FORCE_PATH_STYLE === "true" ||
     process.env.AWS_S3_FORCE_PATH_STYLE === "true";
+const cacheAcrossCommits = process.env.RUNS_ON_CACHE_ACROSS_COMMITS === "true" ||
+    process.env.CACHE_ACROSS_COMMITS === "true";
 const uploadQueueSize = Number(process.env.UPLOAD_QUEUE_SIZE || "4");
 const uploadPartSize = Number(process.env.UPLOAD_PART_SIZE || "32") * 1024 * 1024;
 const downloadQueueSize = Number(process.env.DOWNLOAD_QUEUE_SIZE || "8");
@@ -93817,7 +93819,9 @@ exports.getCacheVersion = getCacheVersion;
 function getS3Prefix(paths, { compressionMethod, enableCrossOsArchive }) {
     const repository = process.env.GITHUB_REPOSITORY;
     const version = getCacheVersion(paths, compressionMethod, enableCrossOsArchive);
-    return ["cache", repository, version].join("/");
+    return cacheAcrossCommits
+        ? ["cache", repository].join("/")
+        : ["cache", repository, version].join("/");
 }
 function getCacheEntry(keys, paths, { compressionMethod, enableCrossOsArchive }) {
     return __awaiter(this, void 0, void 0, function* () {
